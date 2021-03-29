@@ -87,6 +87,14 @@ const completeEventConsistencyScriptEmailBody = (eventsWithErrors) => {
   return message;
 };
 
+const completeIdentityVerificationDeletionScriptEmailBody = (entitiesToDelete) => {
+  let message = `<p>Script correctement exécuté. ${entitiesToDelete.length} entités supprimées.</p>`;
+  for (const entity of entitiesToDelete) {
+    message += `${entity._id}: ${entity.createdAt}</br>`;
+  }
+  return message;
+};
+
 const welcomeTraineeContent = () => `<p>Bonjour,</p>
   <p>Bienvenue sur Compani Formation, l'outil au service du prendre soin,
   nous venons de vous créer votre compte apprenant.</p>
@@ -139,5 +147,6 @@ module.exports = {
   completeEventRepScriptEmailBody,
   completeRoleUpdateScriptEmailBody,
   completeEventConsistencyScriptEmailBody,
+  completeIdentityVerificationDeletionScriptEmailBody,
   welcomeTraineeContent,
 };
