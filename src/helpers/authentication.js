@@ -86,6 +86,8 @@ exports.checkPasswordToken = async (token, email) => {
     const user = await User.findOne({ 'local.email': email }).select('local.email').lean();
     if (!user) throw Boom.notFound(translate[language].userNotFound);
 
+    await IdentityVerification.remove({ email, code: token });
+
     return exports.sendToken(user);
   }
 

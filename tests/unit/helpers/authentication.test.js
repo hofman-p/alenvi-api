@@ -346,18 +346,21 @@ describe('sendToken', () => {
 describe('checkPasswordToken', () => {
   let userFindOne;
   let identityVerificationFindOne;
+  let identityVerificationRemove;
   let sendToken;
   let fakeDate;
   const date = new Date('2020-01-13');
   beforeEach(() => {
     userFindOne = sinon.stub(User, 'findOne');
     identityVerificationFindOne = sinon.stub(IdentityVerification, 'findOne');
+    identityVerificationRemove = sinon.stub(IdentityVerification, 'remove');
     sendToken = sinon.stub(AuthenticationHelper, 'sendToken');
     fakeDate = sinon.stub(Date, 'now');
   });
   afterEach(() => {
     userFindOne.restore();
     identityVerificationFindOne.restore();
+    identityVerificationRemove.restore();
     sendToken.restore();
     fakeDate.restore();
   });
@@ -373,6 +376,8 @@ describe('checkPasswordToken', () => {
     } catch (e) {
       expect(e).toEqual(Boom.notFound(translate[language].userNotFound));
     } finally {
+      sinon.assert.notCalled(identityVerificationRemove);
+      sinon.assert.notCalled(sendToken);
       SinonMongoose.calledWithExactly(
         userFindOne,
         [
@@ -381,7 +386,6 @@ describe('checkPasswordToken', () => {
           { query: 'lean' },
         ]
       );
-      sinon.assert.notCalled(sendToken);
     }
   });
 
@@ -400,6 +404,8 @@ describe('checkPasswordToken', () => {
 
     const result = await AuthenticationHelper.checkPasswordToken(token, email);
     expect(result).toEqual({ token: '1234567890', user: userPayload });
+    sinon.assert.calledWithExactly(identityVerificationRemove, { email, code: token });
+    sinon.assert.calledWithExactly(sendToken, user);
     SinonMongoose.calledWithExactly(
       identityVerificationFindOne,
       [{ query: 'findOne', args: [{ email, code: token }] }, { query: 'lean' }]
@@ -412,7 +418,6 @@ describe('checkPasswordToken', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(sendToken, user);
   });
 
   it('should throw an error if code does not match (mobile)', async () => {
@@ -427,12 +432,13 @@ describe('checkPasswordToken', () => {
     } catch (e) {
       expect(e).toEqual(Boom.notFound());
     } finally {
+      sinon.assert.notCalled(userFindOne);
+      sinon.assert.notCalled(identityVerificationRemove);
+      sinon.assert.notCalled(sendToken);
       SinonMongoose.calledWithExactly(
         identityVerificationFindOne,
         [{ query: 'findOne', args: [{ email, code: token }] }, { query: 'lean' }]
       );
-      sinon.assert.notCalled(userFindOne);
-      sinon.assert.notCalled(sendToken);
     }
   });
 
@@ -448,12 +454,13 @@ describe('checkPasswordToken', () => {
     } catch (e) {
       expect(e).toEqual(Boom.unauthorized());
     } finally {
+      sinon.assert.notCalled(userFindOne);
+      sinon.assert.notCalled(identityVerificationRemove);
+      sinon.assert.notCalled(sendToken);
       SinonMongoose.calledWithExactly(
         identityVerificationFindOne,
         [{ query: 'findOne', args: [{ email, code: token }] }, { query: 'lean' }]
       );
-      sinon.assert.notCalled(userFindOne);
-      sinon.assert.notCalled(sendToken);
     }
   });
 
@@ -469,6 +476,8 @@ describe('checkPasswordToken', () => {
     const result = await AuthenticationHelper.checkPasswordToken('1234567890');
 
     expect(result).toEqual({ token: '1234567890', user: userPayload });
+    sinon.assert.notCalled(identityVerificationRemove);
+    sinon.assert.calledWithExactly(sendToken, user);
     SinonMongoose.calledWithExactly(
       userFindOne,
       [
@@ -477,7 +486,6 @@ describe('checkPasswordToken', () => {
         { query: 'lean' },
       ]
     );
-    sinon.assert.calledWithExactly(sendToken, user);
   });
 });
 

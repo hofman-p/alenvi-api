@@ -6,6 +6,7 @@ const billDispatch = require('../jobs/billDispatch');
 const eventRepetitions = require('../jobs/eventRepetitions');
 const updateRole = require('../jobs/updateRole');
 const eventConsistency = require('../jobs/eventConsistency');
+const identityVerificationDeletion = require('../jobs/identityVerificationDeletion');
 
 const plugins = [
   {
@@ -58,6 +59,16 @@ const plugins = [
             auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
           },
           onComplete: eventConsistency.onComplete,
+        },
+        {
+          name: 'identityVerificationDeletion',
+          time: '0 0 2 * * *',
+          request: {
+            method: 'GET',
+            url: '/scripts/identity-verification-deletion',
+            auth: { credentials: { scope: ['scripts:run'] }, strategy: 'jwt' },
+          },
+          onComplete: identityVerificationDeletion.onComplete,
         },
       ],
     },

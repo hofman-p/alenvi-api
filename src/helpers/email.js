@@ -64,6 +64,17 @@ exports.completeEventConsistencyScriptEmail = async (nb) => {
   return exports.sendEmail(mailOptions);
 };
 
+exports.completeIdentityVerificationDeletionScriptEmail = async (nb) => {
+  const mailOptions = {
+    from: `Compani <${SENDER_MAIL}>`,
+    to: process.env.TECH_EMAILS,
+    subject: 'Script identity verification deletion',
+    html: EmailOptionsHelper.completeIdentityVerificationDeletionScriptEmailBody(nb),
+  };
+
+  return exports.sendEmail(mailOptions);
+};
+
 exports.sendWelcome = async (type, email, company) => {
   const passwordToken = await AuthenticationHelper.createPasswordToken(email);
 
