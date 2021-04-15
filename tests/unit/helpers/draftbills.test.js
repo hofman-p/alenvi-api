@@ -10,6 +10,7 @@ const FundingHistory = require('../../../src/models/FundingHistory');
 const DraftBillsHelper = require('../../../src/helpers/draftBills');
 const UtilsHelper = require('../../../src/helpers/utils');
 const SurchargesHelper = require('../../../src/helpers/surcharges');
+const FundingsHelper = require('../../../src/helpers/fundings');
 const EventRepository = require('../../../src/repositories/EventRepository');
 const { BILLING_DIRECT, BILLING_INDIRECT } = require('../../../src/helpers/constants');
 
@@ -202,7 +203,7 @@ describe('populateFundings', () => {
 
 describe('getMatchingFunding', () => {
   it('should return null if fundings is empty', () => {
-    expect(DraftBillsHelper.getMatchingFunding(new Date(), [])).toBeNull();
+    expect(FundingsHelper.getMatchingFunding(new Date(), [])).toBeNull();
   });
 
   it('should return null is funding not started on date', () => {
@@ -211,7 +212,7 @@ describe('getMatchingFunding', () => {
       { _id: 3, careDays: [0, 3], startDate: '2019-02-23T09:00:00', createdAt: '2019-02-23T09:00:00' },
       { _id: 2, careDays: [1, 5, 6], startDate: '2019-04-23T09:00:00', createdAt: '2019-04-23T09:00:00' },
     ];
-    const result = DraftBillsHelper.getMatchingFunding('2019-01-23T09:00:00', fundings);
+    const result = FundingsHelper.getMatchingFunding('2019-01-23T09:00:00', fundings);
     expect(result).toBeNull();
   });
 
@@ -225,7 +226,7 @@ describe('getMatchingFunding', () => {
         createdAt: '2019-04-23T09:00:00',
       },
     ];
-    const result = DraftBillsHelper.getMatchingFunding('2019-01-23T09:00:00', fundings);
+    const result = FundingsHelper.getMatchingFunding('2019-01-23T09:00:00', fundings);
     expect(result).toBeNull();
   });
 
@@ -235,7 +236,7 @@ describe('getMatchingFunding', () => {
       { _id: 3, careDays: [0, 3], startDate: '2019-02-23T09:00:00', createdAt: '2019-02-23T09:00:00' },
       { _id: 2, careDays: [1, 5, 6], startDate: '2019-04-23T09:00:00', createdAt: '2019-04-23T09:00:00' },
     ];
-    const result = DraftBillsHelper.getMatchingFunding('2019-04-23T09:00:00', fundings);
+    const result = FundingsHelper.getMatchingFunding('2019-04-23T09:00:00', fundings);
 
     expect(result._id).toEqual(2);
   });
@@ -245,7 +246,7 @@ describe('getMatchingFunding', () => {
       { _id: 1, careDays: [0, 2, 3], startDate: '2019-03-23T09:00:00' },
       { _id: 3, careDays: [4, 7], startDate: '2019-04-23T09:00:00' },
     ];
-    const result = DraftBillsHelper.getMatchingFunding('2022-05-01T09:00:00', fundings);
+    const result = FundingsHelper.getMatchingFunding('2022-05-01T09:00:00', fundings);
 
     expect(result._id).toEqual(3);
   });
@@ -255,7 +256,7 @@ describe('getMatchingFunding', () => {
       { _id: 1, careDays: [0, 2, 3], startDate: '2019-03-23T09:00:00' },
       { _id: 2, careDays: [5, 6], startDate: '2019-04-23T09:00:00' },
     ];
-    const result = DraftBillsHelper.getMatchingFunding('2019-04-23T09:00:00', fundings);
+    const result = FundingsHelper.getMatchingFunding('2019-04-23T09:00:00', fundings);
     expect(result).toBeNull();
   });
 });
@@ -702,7 +703,7 @@ describe('computeBillingInfoForEvents', () => {
 
   beforeEach(() => {
     getMatchingVersion = sinon.stub(UtilsHelper, 'getMatchingVersion');
-    getMatchingFunding = sinon.stub(DraftBillsHelper, 'getMatchingFunding');
+    getMatchingFunding = sinon.stub(FundingsHelper, 'getMatchingFunding');
     getEventBilling = sinon.stub(DraftBillsHelper, 'getEventBilling');
     formatDraftBillsForCustomer = sinon.stub(DraftBillsHelper, 'formatDraftBillsForCustomer');
     formatDraftBillsForTPP = sinon.stub(DraftBillsHelper, 'formatDraftBillsForTPP');

@@ -77,8 +77,8 @@ const getMatchingSector = (histories, event) => histories.filter(sh => moment(sh
   .sort((a, b) => new Date(b.startDate) - new Date(a.startDate))[0];
 
 const displayDate = (timestamp = null, path, scheduledDate = null) => {
-  if (timestamp) return DatesHelper.formatDateAndTime(get(timestamp, path), 'DDMMMMYYYYhhmmss');
-  if (scheduledDate) return DatesHelper.formatDateAndTime(scheduledDate, 'DDMMMMYYYYhhmmss');
+  if (timestamp) return DatesHelper.formatDateAndTime(get(timestamp, path), 'DD MM YYYY hh mm ss');
+  if (scheduledDate) return DatesHelper.formatDateAndTime(scheduledDate, 'DD MM YYYY hh mm ss');
   return '';
 };
 
