@@ -28,3 +28,5 @@ exports.format = (date, format = '') => {
 };
 
 exports.descendingSort = key => (a, b) => new Date(b[key]) - new Date(a[key]);
+
+exports.ascendingSort = key => (a, b) => new Date(a[key]) - new Date(b[key]);

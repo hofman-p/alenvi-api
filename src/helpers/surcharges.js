@@ -57,10 +57,7 @@ exports.getEventSurcharges = (event, surcharge) => {
     }
   }
 
-  const {
-    evening, eveningEndTime, eveningStartTime,
-    custom, customStartTime, customEndTime,
-  } = surcharge;
+  const { evening, eveningEndTime, eveningStartTime, custom, customStartTime, customEndTime } = surcharge;
   const end = moment(event.endDate);
   const surcharges = [];
   const eveningSurcharge = exports.getCustomSurcharge(start, end, eveningStartTime, eveningEndTime, evening);

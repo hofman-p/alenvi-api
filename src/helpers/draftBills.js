@@ -8,6 +8,7 @@ const FundingHistory = require('../models/FundingHistory');
 const { HOURLY, MONTHLY, ONCE, FIXED, BILLING_DIRECT } = require('./constants');
 const utils = require('./utils');
 const SurchargesHelper = require('./surcharges');
+const DatesHelper = require('./dates');
 
 exports.populateSurcharge = async (subscription, companyId) => {
   const surcharges = await Surcharge.find({ company: companyId }).lean();
@@ -212,6 +213,45 @@ exports.getEventBilling = (event, unitTTCRate, service, funding) => {
   return { ...billing, customerPrice: price, thirdPartyPayerPrice: 0 };
 };
 
+exports.getSurchargeTime = (surcharges, event) => {
+  const { startDate: eventStarDate, endDate: eventEndDate } = event;
+
+  const sortedRelevantSurcharges = surcharges
+    .filter(s => DatesHelper.isBefore(s.startHour, eventEndDate) && DatesHelper.isAfter(s.endHour, eventStarDate))
+    .map(s => ({ ...s, startHour: Math.max(s.startHour, eventStarDate), endHour: Math.min(s.endHour, eventEndDate) }))
+    .sort(DatesHelper.ascendingSort);
+
+  if (!sortedRelevantSurcharges.length) return 0;
+
+  let surchargeTime = sortedRelevantSurcharges[0].endHour - sortedRelevantSurcharges[0].startHour;
+  for (let i = 1; i < sortedRelevantSurcharges; i++) {
+    const { startHour, endHour } = sortedRelevantSurcharges[i];
+    const { endHour: prevEndHour } = sortedRelevantSurcharges[i - 1];
+
+    if (DatesHelper.isBefore(endHour, prevEndHour)) continue;
+    if (DatesHelper.isAfter(startHour, prevEndHour)) surchargeTime += endHour - startHour;
+    if (DatesHelper.isBefore(startHour, prevEndHour) && DatesHelper.isAfter(endHour, prevEndHour)) {
+      surchargeTime += endHour - prevEndHour;
+    }
+  }
+
+  return surchargeTime / (1000 * 60);
+};
+
+exports.calculateCustomerNotChargedTime = (funding, event, eventPrice) => {
+  if (!funding || funding.customerParticipationRate > 0) return 0;
+
+  if (!eventPrice.surcharges || !eventPrice.surcharges.length) return eventPrice.chargedTime;
+
+  const eventWithSurchargeDuringTppChargeTime = {
+    ...event,
+    endDate: new Date(event.startDate.getTime() + eventPrice.chargedTime * 1000 * 60),
+  };
+
+  const surchargeTime = exports.getSurchargeTime(eventPrice.surcharges, eventWithSurchargeDuringTppChargeTime);
+  return eventPrice.chargedTime - surchargeTime;
+};
+
 exports.formatDraftBillsForCustomer = (customerPrices, event, eventPrice, service, funding) => {
   const inclTaxesCustomer = exports.getInclTaxes(eventPrice.customerPrice, service.vat);
   const { endDate, startDate, _id: eventId, auxiliary } = event;
@@ -231,8 +271,7 @@ exports.formatDraftBillsForCustomer = (customerPrices, event, eventPrice, servic
     prices.thirdPartyPayer = eventPrice.thirdPartyPayer;
   }
 
-  const cusParticipationRateIsZero = funding && funding.customerParticipationRate === 0;
-  const timeNotChargedToCustomer = cusParticipationRateIsZero ? eventPrice.chargedTime : 0;
+  const timeNotChargedToCustomer = exports.calculateCustomerNotChargedTime(funding, event, eventPrice);
 
   return {
     eventsList: [...customerPrices.eventsList, { ...prices }],
