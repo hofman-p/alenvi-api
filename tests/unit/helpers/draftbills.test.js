@@ -662,11 +662,14 @@ describe('calculateCustomerNotChargedTime', () => {
 
 describe('formatDraftBillsForCustomer', () => {
   let getInclTaxes;
+  let calculateCustomerNotChargedTime;
   beforeEach(() => {
     getInclTaxes = sinon.stub(DraftBillsHelper, 'getInclTaxes');
+    calculateCustomerNotChargedTime = sinon.stub(DraftBillsHelper, 'calculateCustomerNotChargedTime');
   });
   afterEach(() => {
     getInclTaxes.restore();
+    calculateCustomerNotChargedTime.restore();
   });
 
   it('should format bill for customer without tpp info', () => {
@@ -680,18 +683,17 @@ describe('formatDraftBillsForCustomer', () => {
     const eventPrice = { customerPrice: 17.5 };
 
     getInclTaxes.callsFake((exclTaxes, vat) => exclTaxes * (1 + (vat / 100)));
+    calculateCustomerNotChargedTime.returns(0);
 
     const result = DraftBillsHelper.formatDraftBillsForCustomer(customerPrices, event, eventPrice, service, null);
 
     expect(result).toMatchObject({
-      eventsList: [
-        { event: '123456' },
-        { event: 'abc', inclTaxesCustomer: 21, exclTaxesCustomer: 17.5 },
-      ],
+      eventsList: [{ event: '123456' }, { event: 'abc', inclTaxesCustomer: 21, exclTaxesCustomer: 17.5 }],
       hours: 5,
       exclTaxes: 37.5,
       inclTaxes: 46,
     });
+    sinon.assert.calledOnceWithExactly(calculateCustomerNotChargedTime, null, event, eventPrice);
   });
 
   it('should format bill for customer with tpp info', () => {
@@ -705,6 +707,7 @@ describe('formatDraftBillsForCustomer', () => {
     const eventPrice = { customerPrice: 17.5, thirdPartyPayerPrice: 12.5, thirdPartyPayer: 'tpp' };
     const funding = { customerParticipationRate: 30 };
     getInclTaxes.callsFake((exclTaxes, vat) => exclTaxes * (1 + (vat / 100)));
+    calculateCustomerNotChargedTime.returns(60);
 
     const result = DraftBillsHelper.formatDraftBillsForCustomer(customerPrices, event, eventPrice, service, funding);
 
@@ -720,41 +723,11 @@ describe('formatDraftBillsForCustomer', () => {
           thirdPartyPayer: 'tpp',
         },
       ],
-      hours: 5,
+      hours: 4,
       exclTaxes: 37.5,
       inclTaxes: 46,
     });
-  });
-
-  it('should format bill for customer with 0% customerparticipationRate', () => {
-    const customerPrices = { exclTaxes: 20, inclTaxes: 25, hours: 0, eventsList: [] };
-    const event = {
-      _id: 'abc',
-      startDate: (new Date('2019/05/08')).setHours(8),
-      endDate: (new Date('2019/05/08')).setHours(10),
-    };
-    const service = { vat: 20 };
-    const eventPrice = { customerPrice: 17.5, thirdPartyPayerPrice: 12.5, thirdPartyPayer: 'tpp', chargedTime: 60 };
-    const funding = { customerParticipationRate: 0 };
-    getInclTaxes.callsFake((exclTaxes, vat) => exclTaxes * (1 + (vat / 100)));
-
-    const result = DraftBillsHelper.formatDraftBillsForCustomer(customerPrices, event, eventPrice, service, funding);
-
-    expect(result).toMatchObject({
-      eventsList: [
-        {
-          event: 'abc',
-          inclTaxesCustomer: 21,
-          exclTaxesCustomer: 17.5,
-          exclTaxesTpp: 12.5,
-          inclTaxesTpp: 15,
-          thirdPartyPayer: 'tpp',
-        },
-      ],
-      hours: 1,
-      exclTaxes: 37.5,
-      inclTaxes: 46,
-    });
+    sinon.assert.calledOnceWithExactly(calculateCustomerNotChargedTime, funding, event, eventPrice);
   });
 });
 
