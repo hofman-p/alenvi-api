@@ -595,6 +595,71 @@ describe('getEventBilling', () => {
   });
 });
 
+describe('calculateCustomerNotChargedTime', () => {
+  let getSurchargedTime;
+
+  beforeEach(() => { getSurchargedTime = sinon.stub(DraftBillsHelper, 'getSurchargedTime'); });
+
+  afterEach(() => { getSurchargedTime.restore(); });
+
+  it('should return 0 if no funding', () => {
+    const result = DraftBillsHelper.calculateCustomerNotChargedTime(null, { _id: new ObjectID() }, {});
+
+    expect(result).toBe(0);
+    sinon.assert.notCalled(getSurchargedTime);
+  });
+
+  it('should return 0 if customer participation rate is more than 0', () => {
+    const funding = { customerParticipationRate: 25 };
+    const event = { _id: new ObjectID() };
+    const eventPrice = { chargedTime: 2 };
+
+    const result = DraftBillsHelper.calculateCustomerNotChargedTime(funding, event, eventPrice);
+
+    expect(result).toBe(0);
+    sinon.assert.notCalled(getSurchargedTime);
+  });
+
+  it('should return tpp charged time if no surcharges (no array)', () => {
+    const funding = { customerParticipationRate: 0 };
+    const event = { _id: new ObjectID() };
+    const eventPrice = { chargedTime: 2 };
+
+    const result = DraftBillsHelper.calculateCustomerNotChargedTime(funding, event, eventPrice);
+
+    expect(result).toBe(2);
+    sinon.assert.notCalled(getSurchargedTime);
+  });
+
+  it('should return tpp charged time if no surcharges (empty array)', () => {
+    const funding = { customerParticipationRate: 0 };
+    const event = { _id: new ObjectID() };
+    const eventPrice = { chargedTime: 2, surcharges: [] };
+
+    const result = DraftBillsHelper.calculateCustomerNotChargedTime(funding, event, eventPrice);
+
+    expect(result).toBe(2);
+    sinon.assert.notCalled(getSurchargedTime);
+  });
+
+  it('should return tpp charged time - surcharged time if surcharges', () => {
+    const funding = { customerParticipationRate: 0 };
+    const event = { _id: new ObjectID(), startDate: new Date('2021-04-12T05:00:00.000Z') };
+    const surcharges = [{ _id: new ObjectID() }];
+    const eventPrice = { chargedTime: 60, surcharges };
+    getSurchargedTime.returns(30);
+
+    const result = DraftBillsHelper.calculateCustomerNotChargedTime(funding, event, eventPrice);
+
+    expect(result).toBe(30);
+    sinon.assert.calledOnceWithExactly(
+      getSurchargedTime,
+      surcharges,
+      { _id: event._id, startDate: new Date('2021-04-12T05:00:00.000Z'), endDate: new Date('2021-04-12T06:00:00.000Z') }
+    );
+  });
+});
+
 describe('formatDraftBillsForCustomer', () => {
   let getInclTaxes;
   beforeEach(() => {

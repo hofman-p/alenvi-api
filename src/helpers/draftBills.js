@@ -213,7 +213,7 @@ exports.getEventBilling = (event, unitTTCRate, service, funding) => {
   return { ...billing, customerPrice: price, thirdPartyPayerPrice: 0 };
 };
 
-exports.getSurchargeTime = (surcharges, event) => {
+exports.getSurchargedTime = (surcharges, event) => {
   const { startDate: eventStarDate, endDate: eventEndDate } = event;
 
   const sortedRelevantSurcharges = surcharges
@@ -248,7 +248,7 @@ exports.calculateCustomerNotChargedTime = (funding, event, eventPrice) => {
     endDate: new Date(event.startDate.getTime() + eventPrice.chargedTime * 1000 * 60),
   };
 
-  const surchargeTime = exports.getSurchargeTime(eventPrice.surcharges, eventWithSurchargeDuringTppChargeTime);
+  const surchargeTime = exports.getSurchargedTime(eventPrice.surcharges, eventWithSurchargeDuringTppChargeTime);
   return eventPrice.chargedTime - surchargeTime;
 };
 
