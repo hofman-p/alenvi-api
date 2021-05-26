@@ -219,12 +219,12 @@ exports.getSurchargedTime = (surcharges, event) => {
   const sortedRelevantSurcharges = surcharges
     .filter(s => DatesHelper.isBefore(s.startHour, eventEndDate) && DatesHelper.isAfter(s.endHour, eventStarDate))
     .map(s => ({ ...s, startHour: Math.max(s.startHour, eventStarDate), endHour: Math.min(s.endHour, eventEndDate) }))
-    .sort(DatesHelper.ascendingSort);
+    .sort(DatesHelper.ascendingSort('startHour'));
 
   if (!sortedRelevantSurcharges.length) return 0;
 
   let surchargeTime = sortedRelevantSurcharges[0].endHour - sortedRelevantSurcharges[0].startHour;
-  for (let i = 1; i < sortedRelevantSurcharges; i++) {
+  for (let i = 1; i < sortedRelevantSurcharges.length; i++) {
     const { startHour, endHour } = sortedRelevantSurcharges[i];
     const { endHour: prevEndHour } = sortedRelevantSurcharges[i - 1];
 

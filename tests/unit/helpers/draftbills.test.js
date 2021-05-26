@@ -595,6 +595,34 @@ describe('getEventBilling', () => {
   });
 });
 
+describe('getSurchargedTime', () => {
+  it('should return 0 if no relevant surcharges', () => {
+    const surcharges = [
+      { startHour: new Date('2021-02-04T11:00:00.000Z'), endHour: new Date('2021-02-04T12:00:00.000Z') },
+    ];
+    const event = { startDate: new Date('2021-02-04T12:00:00.000Z'), endDate: new Date('2021-02-04T14:00:00.000Z') };
+
+    const result = DraftBillsHelper.getSurchargedTime(surcharges, event);
+
+    expect(result).toBe(0);
+  });
+
+  it('should return duration of event in minute with a surcharge', () => {
+    const surcharges = [
+      { startHour: new Date('2021-02-04T11:00:00.000Z'), endHour: new Date('2021-02-04T12:00:00.000Z') },
+      { startHour: new Date('2021-02-04T11:00:00.000Z'), endHour: new Date('2021-02-04T12:15:00.000Z') },
+      { startHour: new Date('2021-02-04T13:50:00.000Z'), endHour: new Date('2021-02-04T15:00:00.000Z') },
+      { startHour: new Date('2021-02-04T12:00:00.000Z'), endHour: new Date('2021-02-04T12:10:00.000Z') },
+      { startHour: new Date('2021-02-04T12:13:00.000Z'), endHour: new Date('2021-02-04T13:00:00.000Z') },
+    ];
+    const event = { startDate: new Date('2021-02-04T12:00:00.000Z'), endDate: new Date('2021-02-04T14:00:00.000Z') };
+
+    const result = DraftBillsHelper.getSurchargedTime(surcharges, event);
+
+    expect(result).toBe(72);
+  });
+});
+
 describe('calculateCustomerNotChargedTime', () => {
   let getSurchargedTime;
 
