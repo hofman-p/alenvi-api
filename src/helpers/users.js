@@ -80,16 +80,22 @@ exports.getLearnerList = async (query, credentials) => {
   if (query.hasCompany) userQuery = { ...omit(userQuery, 'hasCompany'), company: { $exists: true } };
 
   const learnerList = await User
-    .find(userQuery, 'identity.firstname identity.lastname picture', { autopopulate: false })
+    .find(userQuery, 'identity.firstname identity.lastname picture local contact', { autopopulate: false })
     .populate({ path: 'company', select: 'name' })
+    .populate({ path: 'role.client', select: 'name' })
+    .populate({ path: 'role.vendor', select: 'name' })
     .populate({ path: 'blendedCoursesCount' })
     .populate({ path: 'eLearningCoursesCount' })
     .populate({ path: 'activityHistories', select: 'updatedAt', options: { sort: { updatedAt: -1 } } })
+    .populate({ path: 'attendances' })
+    .populate({ path: 'questionnaireHistories' })
     .setOptions({ isVendorUser: !!get(credentials, 'role.vendor') })
     .lean();
 
   return learnerList.map(learner => ({
-    ...omit(learner, 'activityHistories'),
+    ...omit(learner, 'activityHistories questionnaireHistories attendances'),
+    attendancesCount: learner.attendances.length,
+    questionnaireHistoryCount: learner.questionnaireHistories.length,
     activityHistoryCount: learner.activityHistories.length,
     lastActivityHistory: learner.activityHistories[0],
   }));

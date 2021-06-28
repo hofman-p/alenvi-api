@@ -329,6 +329,18 @@ UserSchema.virtual('activityHistories', {
   foreignField: 'user',
 });
 
+UserSchema.virtual('questionnaireHistories', {
+  ref: 'QuestionnaireHistory',
+  localField: '_id',
+  foreignField: 'user',
+});
+
+UserSchema.virtual('attendances', {
+  ref: 'Attendance',
+  localField: '_id',
+  foreignField: 'trainee',
+});
+
 UserSchema.statics.isActive = isActive;
 
 UserSchema.virtual('isActive').get(setIsActive);
