@@ -211,4 +211,8 @@ exports.routes = [
     plugin: require('./customerNotes'),
     routes: { prefix: '/customernotes' },
   },
+  {
+    plugin: require('./teletransmission'),
+    routes: { prefix: '/teletransmission' },
+  },
 ];
